@@ -129,8 +129,8 @@ module Mobile() {
 
 
 // Sheet placement values
-number_of_branches = 0;
-number_of_hooks = 4;
+number_of_branches = 4;
+number_of_hooks = 0;
 sheet_width = 210;
 sheet_height = 220;
 piece_extra_thickness = 1;
@@ -150,10 +150,12 @@ module ToCut() {
       translate([0,
                  -number_of_branches*(branch_initial_width+branch_separation) - branch_to_hook_separation,
                  0]) {
-        for(j=[0:number_of_hooks-1]) {
-          translate([(support_pillar_width+hook_separation)*j,0,0]) {
-            rotate([-90,0,0]) {
-              translate([0,0,0]) CenterSupportHook();
+        if (number_of_hooks > 0) {
+          for(j=[0:number_of_hooks-1]) {
+            translate([(support_pillar_width+hook_separation)*j,0,0]) {
+              rotate([-90,0,0]) {
+                translate([0,0,0]) CenterSupportHook();
+              }
             }
           }
         }
