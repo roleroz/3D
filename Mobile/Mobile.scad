@@ -165,4 +165,94 @@ module ToCut() {
 }
 
 *color("gray") translate([0,-sheet_height,0]) cube([sheet_width,sheet_height,1]);
-translate([top_corner_separation,-top_corner_separation,0]) ToCut();
+*translate([top_corner_separation,-top_corner_separation,0]) ToCut();
+
+
+gear_thickness=25.4*3/4;
+gear_tooth_height=gear_thickness/2;
+gear_support_thickness=gear_thickness-gear_tooth_height;
+gear_tooth_vertical_offset=2;
+gear_tooth_thickness=20;
+gear_radius=50;
+tooths_per_gear=12;
+bolt_diameter=10;
+
+// TODO: Give this tooth some room to move.
+module GearTooth() {
+  translate([0,0,gear_tooth_height/2]) {
+    intersection() {
+      difference() {
+        cylinder(h=gear_tooth_height, r=gear_radius, $fn=100, center=true);
+        cylinder(h=gear_tooth_height+1,
+                 r=gear_radius-gear_tooth_thickness,
+                 $fn=100,
+                 center=true);
+      }
+      linear_extrude(height=gear_tooth_height, center=true) {
+        polygon([[0,0],
+                 [-gear_radius*tan(90/tooths_per_gear),gear_radius],
+                 [gear_radius*tan(90/tooths_per_gear),gear_radius]],
+                paths=[[0,1,2]]);
+      }
+    }
+  }
+}
+
+*GearTooth();
+
+module GearConnectionPiece() {
+  difference() {
+    cylinder(h=gear_support_thickness, r=gear_radius, $fn=100);
+    translate([0,0,-1]) {
+      cylinder(h=gear_support_thickness+2, d=bolt_diameter, $fn=100);
+    }
+    translate([0,0,gear_support_thickness-gear_tooth_vertical_offset]) {
+      cylinder(h=gear_tooth_vertical_offset+1,
+               r=gear_radius-gear_tooth_thickness,
+               $fn=100);
+    }
+  }
+  translate([0,0,gear_support_thickness]) {
+    for(i=[0:tooths_per_gear-1]) {
+      rotate(a=[0,0,i*360/tooths_per_gear]) {
+        GearTooth();
+      }
+    }
+  }
+}
+
+*GearConnectionPiece();
+
+module GearCenterPiece() {
+  difference() {
+    union() {
+      cylinder(h=gear_tooth_vertical_offset,
+               r=gear_radius-gear_tooth_thickness,
+               $fn=100);
+      cylinder(h=gear_tooth_height+gear_tooth_vertical_offset,
+               r=gear_radius-gear_tooth_thickness-1,
+               $fn=100);
+    }
+    translate([0,0,-1]) {
+      cylinder(h=gear_tooth_height+gear_tooth_vertical_offset+2,
+               d=bolt_diameter,
+               $fn=100);
+    }
+  }
+}
+
+*GearCenterPiece();
+
+module GearConnection() {
+  color("red") translate([0,0,-gear_thickness+gear_tooth_height/2]) {
+    GearConnectionPiece();
+  }
+  translate([0,0,-gear_tooth_height/2-gear_tooth_vertical_offset]) {
+    GearCenterPiece();
+  }
+  color("green") translate([0,0,gear_thickness-gear_tooth_height/2]) {
+    rotate([180,0,180/tooths_per_gear]) GearConnectionPiece();
+  }
+}
+
+GearConnection();
